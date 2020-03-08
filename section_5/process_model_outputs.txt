@@ -1,0 +1,48 @@
+Let's say you have a cat and two dogs at your house.
+
+If both dogs are in a room together, they are best buds, and everything is going well.
+
+If the cat and dog #1 are in a room together, they are also good friends, and everything is fine.
+
+However, if the cat and dog #2 are in a room together, they don't get along, and you may need to either pull them apart, or at least play a pre-recorded message from your smart speaker to tell them to cut it out.
+
+In this exercise, you'll receive a video where some combination or the cat and dogs may be in view. You also will have an IR that is able to determine which of these, if any, are on screen.
+
+While the best model for this is likely an object detection model that can identify different breeds, I have provided you with a very basic (and overfit) model that will return three classes, one for one or less pets on screen, one for the bad combination of the cat and dog #2, and one for the fine combination of the cat and dog #1. This is within the exercise directory - model.xml.
+
+It is up to you to add code that will print to the terminal anytime the bad combination of the cat and dog #2 are detected together. Note: It's important to consider whether you really want to output a warning every single time both pets are on-screen - is your warning helpful if it re-starts every 30th of a second, with a video at 30 fps?
+
+Solution:
+
+My approach in this exercise was to check if the bad combination of pets was on screen, but also to track whether I already warned them in the current incident. Now, I might also consider re-playing the warning after a certain time period in a single consecutive incident, but the provided video file does not really have that long of consecutive timespans. I also output a "timestamp" by checking how many frames had been processed so far at 30 fps.
+
+Before the video loop, I added:
+
+counter = 0
+incident_flag = False
+Within the loop, after a frame is read, I make sure to increment the counter: counter+=1.
+
+I made an assess_scene function for most of the processing:
+
+def assess_scene(result, counter, incident_flag):
+    '''
+    Based on the determined situation, potentially send
+    a message to the pets to break it up.
+    '''
+    if result[0][1] == 1 and not incident_flag:
+        timestamp = counter / 30
+        print("Log: Incident at {:.2f} seconds.".format(timestamp))
+        print("Break it up!")
+        incident_flag = True
+    elif result[0][1] != 1:
+        incident_flag = False
+
+    return incident_flag
+And I call that within the loop right after the result is available:
+
+incident_flag = assess_scene(result, counter, incident_flag)
+Running the App
+To run the app, I just used:
+
+python app.py -m model.xml
+Since the model was provided here in the same directory.

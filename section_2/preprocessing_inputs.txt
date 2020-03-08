@@ -1,0 +1,47 @@
+Now that we have a few pre-trained models downloaded, it's time to preprocess the inputs to match what each of the models expects as their input. We'll use the same models as before as a basis for determining the preprocessing necessary for each input file.
+
+As a reminder, our three models are:
+
+Human Pose Estimation: human-pose-estimation-0001
+Text Detection: text-detection-0004
+Determining Car Type & Color: vehicle-attributes-recognition-barrier-0039
+Note: For ease of use, these models have been added into the /home/workspace/models directory. For example, if you need to use the Text Detection model, you could find it at:
+
+
+/home/workspace/models/text_detection_0004.xml
+Each link above contains the documentation for the related model. In our case, we want to focus on the Inputs section of the page, wherein important information regarding the input shape, order of the shape (such as color channel first or last), and the order of the color channels, is included.
+
+Your task is to fill out the code in three functions within preprocess_inputs.py, one for each of the three models. We have also included a potential sample image for each of the three models, that will be used with test.py to check whether the input for each model has been adjusted as expected for proper model input.
+
+Note that each image is currently loaded as BGR with H, W, C order in the test.py file, so any necessary preprocessing to change that should occur in your three work files. Note that BGR order is used, as the OpenCV function we use to read images loads as BGR, and not RGB.
+
+When finished, you should be able to run the test.py file and pass all three tests.
+
+Solution:
+
+Using the documentation pages for each model, I ended up noticing they needed essentially the same preprocessing, outside of the height and width of the input to the network. The images coming from cv2.imread were already going to be BGR, and all the models wanted BGR inputs, so I didn't need to do anything there. However, each image was coming in as height x width x channels, and each of these networks wanted channels first, along with an extra dimension at the start for batch size.
+
+So, for each network, the preprocessing needed to 1) re-size the image, 2) move the channels from last to first, and 3) add an extra dimension of 1 to the start. Here is the function I created for this, which I could call for each separate network:
+
+def preprocessing(input_image, height, width):
+    '''
+    Given an input image, height and width:
+    - Resize to height and width
+    - Transpose the final "channel" dimension to be first
+    - Reshape the image to add a "batch" of 1 at the start 
+    '''
+    image = cv2.resize(input_image, (width, height))
+    image = image.transpose((2,0,1))
+    image = image.reshape(1, 3, height, width)
+
+    return image
+Then, for each model, I can just call this function with the height and width from the documentation:
+
+Human Pose
+preprocessed_image = preprocessing(preprocessed_image, 256, 456)
+Text Detection
+preprocessed_image = preprocessing(preprocessed_image, 768, 1280)
+Car Meta
+preprocessed_image = preprocessing(preprocessed_image, 72, 72)
+Testing
+To test your implementation, you can just run python test.py.
